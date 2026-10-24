@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fil"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14080f"><meta name="mobile-web-app-capable" content="yes">
+<title>KuwentoCut – AI Auto Video Editor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23d4163c'/%3E%3Cpath d='M24 18l22 14-22 14z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+:root{--bg:#14080f;--cd:#22101a;--ln:#40202f;--tx:#fbeff3;--mu:#b794a2;--r:#d4163c;--g:#f2b84b}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "Trebuchet MS",system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 28px);max-width:560px;margin-inline:auto}
+header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.lg{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--r),#7a0c26);display:grid;place-items:center;box-shadow:0 4px 18px #d4163c66}
+.lg:after{content:"";border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+h1{font:900 24px/1 Georgia,serif;margin:0;letter-spacing:.2px}
+header p{margin:2px 0 0;color:var(--mu);font-size:13px}
+.cd{background:var(--cd);border:1px solid var(--ln);border-radius:16px;padding:14px;margin-bottom:12px}
+h2{font:700 16px Georgia,serif;margin:0 0 10px;color:var(--g)}
+.up{display:block;text-align:center;border:2px dashed #7a3550;border-radius:16px;padding:26px 12px;cursor:pointer;background:#2a1220}
+.up b{display:block;font-size:17px}.up span{color:var(--mu);font-size:13px}
+.up input{display:none}
+.stage{position:relative;background:#000;border-radius:14px;overflow:hidden;display:flex;justify-content:center;margin-top:12px}
+video,canvas{max-width:100%;max-height:52vh;display:block}
+#c{display:none}.run #c{display:block}
+.run #v{position:absolute;opacity:0;pointer-events:none;width:2px;height:2px}
+label.f{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+select,input[type=text],input[type=password]{width:100%;background:#170a11;color:var(--tx);border:1px solid var(--ln);border-radius:11px;padding:11px;font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ch input{display:none}
+.ch span{display:block;padding:8px 13px;border-radius:99px;border:1px solid var(--ln);background:#170a11;color:var(--mu);font-size:13px}
+.ch input:checked+span{background:var(--r);border-color:var(--r);color:#fff}
+button,.dl{font:inherit;font-weight:700;border:0;border-radius:13px;padding:14px;width:100%;color:#fff;cursor:pointer;background:var(--r);text-align:center;text-decoration:none;display:block}
+button.big{font-size:17px;padding:17px;background:linear-gradient(135deg,#e8174a,#9c0f2e);box-shadow:0 6px 22px #d4163c55}
+button.gh{background:#3a1b2a}
+button.gd{background:linear-gradient(135deg,var(--g),#c98a1c);color:#2a1500}
+button:disabled{opacity:.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.pb{height:8px;background:#170a11;border-radius:9px;overflow:hidden;margin-top:12px}
+#bar{height:100%;width:0;background:linear-gradient(90deg,var(--r),var(--g));transition:width .3s}
+#log{font-size:13px;color:var(--mu);margin-top:8px;min-height:18px}
+#stop{display:none;margin-top:10px}.run #stop{display:block}
+.cr{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.cr small{color:var(--mu);width:42px;flex:none}
+.cr input{padding:8px}.cr button{width:36px;padding:8px;flex:none;background:#3a1b2a}
+#cl{max-height:260px;overflow:auto}
+.hint{font-size:12.5px;color:var(--mu);margin:8px 0 0}
+a{color:var(--g)}
+</style></head><body>
+<header><div class="lg"></div><div><h1>KuwentoCut</h1><p>AI na ang bahala mag-edit ng drama mo. Libre.</p></div></header>
+
+<div class="cd">
+<label class="up"><input type="file" id="fi" accept="video/*"><b>I-upload ang AI drama video</b><span>MP4 / MOV · isang video lang, ayos na</span></label>
+<div class="stage" id="st" hidden><video id="v" controls playsinline></video><canvas id="c"></canvas></div>
+</div>
+
+<div class="cd">
+<h2>Gusto mong istilo</h2>
+<label class="f">Libreng Gemini API key (para sa auto-caption at matalinong AI) — <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">kunin dito, libre</a></label>
+<input type="password" id="key" placeholder="Idikit ang key dito (naka-save sa phone mo lang)" autocomplete="off">
+<div class="row">
+<div><label class="f">Wika sa video</label><select id="lang"><option>Tagalog</option><option>English</option><option>Taglish</option><option>Cebuano</option><option>Ilocano</option></select></div>
+<div><label class="f">Music mood</label><select id="mood"><option value="auto">AI ang pipili</option><option value="dramatic">Dramatic</option><option value="sad">Malungkot</option><option value="suspense">Suspense</option><option value="romantic">Romantic</option><option value="upbeat">Masigla</option></select></div>
+<div><label class="f">Caption style</label><select id="cs"><option value="pop">Puting bold</option><option value="gold">Ginto</option><option value="tele">Teleserye (pulang kahon)</option><option value="cine">Cinematic</option></select></div>
+<div><label class="f">Kulay ng video</label><select id="gr"><option value="cine">Cinematic</option><option value="drama">Dramatic</option><option value="warm">Mainit</option><option value="none">Wala</option></select></div>
+</div>
+<div class="chs">
+<label class="ch"><input type="checkbox" id="cp" checked><span>Caption</span></label>
+<label class="ch"><input type="checkbox" id="tr" checked><span>Transition</span></label>
+<label class="ch"><input type="checkbox" id="sf" checked><span>Sound effects</span></label>
+<label class="ch"><input type="checkbox" id="zm" checked><span>Auto zoom</span></label>
+<label class="ch"><input type="checkbox" id="mu" checked><span>Background music</span></label>
+<label class="ch"><input type="checkbox" id="in" checked><span>Intro title</span></label>
+<label class="ch"><input type="checkbox" id="out" checked><span>Outro</span></label>
+</div>
+<label class="f">Pamagat sa intro (AI ang bahala kung blangko)</label><input type="text" id="it" placeholder="hal. ANG BIYENANG MAY BILANG">
+<label class="f">Text sa outro</label><input type="text" id="ot" value="Salamat sa panonood! Mag-like at mag-follow ❤">
+<label class="f">Lakas ng music</label><input type="range" id="mv" min="0" max="2" step=".1" value="1" style="width:100%">
+<button class="big" id="go" disabled style="margin-top:14px">✨ AI Auto Edit</button>
+<div class="pb"><div id="bar"></div></div><div id="log">Mag-upload muna ng video.</div>
+<button class="gh" id="stop">⏹ Ihinto</button>
+</div>
+
+<div class="cd" id="ed" hidden>
+<h2>Na-edit na ng AI</h2><div class="hint" id="sum" style="margin:0 0 10px"></div>
+<div id="cl"></div>
+<p class="hint" id="nocap"></p>
+<div class="two"><button class="gh" id="pv">▶ I-preview</button><button class="gd" id="ex">⬇ I-export</button></div>
+<p class="hint">Real-time ang export: ang 1 minutong video = 1 minutong render. Huwag i-lock ang screen at huwag lumipat ng app habang nagre-render.</p>
+</div>
+
+<div class="cd" id="res" hidden>
+<h2>Tapos na! 🎉</h2>
+<video id="rv" controls playsinline style="width:100%;border-radius:12px;max-height:55vh"></video>
+<div class="two"><a class="dl gd" id="dl">⬇ I-download</a><button class="gh" id="sh">Ibahagi</button></div>
+</div>
+
+<script>
+const g=i=>document.getElementById(i),V=g('v'),C=g('c'),X=C.getContext('2d');
+let F,dur=0,P=null,A,src,busy=0,stopF=0,MG,SG,out;
+const TR=['flash','dip','zoom'],OK=['hit','riser','sting','ding'];
+const lg=m=>{g('log').textContent=m},sp=(p,m)=>{g('bar').style.width=p+'%';if(m)lg(m)};
+const MD={dramatic:{r:45,c:[[0,3,7],[-4,0,3],[-2,2,5],[-7,-4,0]],l:4,a:0},sad:{r:48,c:[[0,3,7],[-3,0,4],[-5,-2,2],[-7,-4,0]],l:5,a:.8},suspense:{r:41,c:[[0,3,6],[0,3,6],[-1,2,5],[0,3,6]],l:4,a:0,h:1},romantic:{r:50,c:[[0,4,7],[-3,0,4],[-5,-1,2],[-7,-3,0]],l:4,a:.5},upbeat:{r:52,c:[[0,4,7],[-3,0,4],[-5,-1,2],[-7,-3,0]],l:2,a:.25}};
+const gm=()=>g('mood').value=='auto'?(P.mood||'dramatic'):g('mood').value;
+const hz=m=>440*2**((m-69)/12),wait=ms=>new Promise(r=>setTimeout(r,ms));
+try{g('key').value=localStorage.gk||''}catch(e){}
+g('key').onchange=()=>{try{localStorage.gk=g('key').value.trim()}catch(e){}};
+
+g('fi').onchange=e=>{F=e.target.files[0];if(!F)return;P=null;g('ed').hidden=g('res').hidden=1;
+ V.onloadedmetadata=()=>{dur=V.duration;const s=Math.min(1,1280/Math.max(V.videoWidth,V.videoHeight));C.width=Math.round(V.videoWidth*s/2)*2;C.height=Math.round(V.videoHeight*s/2)*2;g('st').hidden=0;g('go').disabled=0;sp(0,`Handa na: ${F.name} (${Math.round(dur)} seg). Pindutin ang AI Auto Edit.`)};
+ V.src=URL.createObjectURL(F)};
+
+function seek(t){return new Promise(r=>{const h=()=>{V.removeEventListener('seeked',h);r()};V.addEventListener('seeked',h);V.currentTime=t;setTimeout(h,1500)})}
+function energy(b){const d=b.getChannelData(0),w=Math.floor(b.sampleRate*.25),n=Math.floor(d.length/w),r=[];for(let i=0;i<n;i++){let s=0;for(let j=i*w;j<(i+1)*w;j+=8)s+=d[j]*d[j];r.push(Math.sqrt(s/(w/8)))}return r}
+async function cuts(){const c=document.createElement('canvas');c.width=48;c.height=27;const q=c.getContext('2d',{willReadFrequently:true}),st=Math.max(.5,dur/160),ds=[],o=[];let pv=null;
+ for(let t=0;t<dur-.1;t+=st){await seek(t);q.drawImage(V,0,0,48,27);const d=q.getImageData(0,0,48,27).data;if(pv){let s=0;for(let i=0;i<d.length;i+=4)s+=Math.abs(d[i]-pv[i])+Math.abs(d[i+1]-pv[i+1])+Math.abs(d[i+2]-pv[i+2]);ds.push([t,s/(d.length/4)/3])}pv=d;sp(8+t/dur*20,'Hinahanap ang mga eksena…')}
+ const m=ds.reduce((a,x)=>a+x[1],0)/(ds.length||1);ds.forEach(([t,v])=>{if(v>Math.max(18,m*3)&&(!o.length||t-o[o.length-1]>2))o.push(t)});return o}
+function local(cu,en){const p={title:F.name.replace(/\.[^.]+$/,''),mood:null,captions:[],cuts:cu.map((t,i)=>({t,tr:TR[i%3]})),zooms:[],sfx:cu.map(t=>({t:Math.max(0,t-.05),k:'whoosh'}))};
+ const m=en.reduce((a,b)=>a+b,0)/(en.length||1);let last=-9;
+ en.forEach((v,i)=>{const t=i*.25;if(v>m*2.4&&v>=(en[i-1]||0)&&v>=(en[i+1]||0)&&t-last>4&&t>1.5){last=t;p.zooms.push({t:t-.1,d:1.3,a:.14});p.sfx.push({t,k:'hit'})}});
+ if(!p.zooms.length)for(let t=3;t<dur-3;t+=7)p.zooms.push({t,d:3,a:.08});return p}
+
+function wav(f){const n=f.length,b=new DataView(new ArrayBuffer(44+n*2)),w=(o,s)=>[...s].forEach((c,i)=>b.setUint8(o+i,c.charCodeAt(0)));w(0,'RIFF');b.setUint32(4,36+n*2,1);w(8,'WAVEfmt ');b.setUint32(16,16,1);b.setUint16(20,1,1);b.setUint16(22,1,1);b.setUint32(24,16000,1);b.setUint32(28,32000,1);b.setUint16(32,2,1);b.setUint16(34,16,1);w(36,'data');b.setUint32(40,n*2,1);for(let i=0;i<n;i++)b.setInt16(44+i*2,Math.max(-1,Math.min(1,f[i]))*32767,1);return b}
+async function b64wav(buf,s,l){const oc=new OfflineAudioContext(1,Math.ceil(l*16000),16000),sr=oc.createBufferSource();sr.buffer=buf;sr.connect(oc.destination);sr.start(0,s,l);const o=await oc.startRendering();
+ return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.split(',')[1]);f.readAsDataURL(new Blob([wav(o.getChannelData(0))],{type:'audio/wav'}))})}
+async function gem(b64){const q=`Ikaw ay propesyonal na editor ng Filipino teleserye / AI drama video. Wika ng audio: ${g('lang').value}. Pakinggan ang audio at ibalik LAMANG ang JSON: {"title":"maikling pamagat","mood":"dramatic|sad|suspense|romantic|upbeat","captions":[{"s":segundo,"e":segundo,"t":"teksto"}],"moments":[{"t":segundo,"zoom":true,"sfx":"hit|riser|sting|ding|none"}]}. Captions: isulat nang eksakto ang sinasabi, hanggang 7 salita bawat linya, tamang oras mula sa umpisa ng clip na ito. Moments: piliin lang ang pinaka-emosyonal na sandali (sigaw, sampal, rebelasyon, suspense), hindi hihigit sa isa kada 6 na segundo.`;let err;
+ for(const m of ['gemini-2.5-flash','gemini-2.0-flash']){try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':g('key').value.trim()},body:JSON.stringify({contents:[{parts:[{text:q},{inline_data:{mime_type:'audio/wav',data:b64}}]}],generationConfig:{responseMimeType:'application/json',temperature:.3}})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);return JSON.parse(j.candidates[0].content.parts[0].text.replace(/```json|```/g,''))}catch(e){err=e}}throw err}
+async function ask(buf){const o={captions:[],moments:[],mood:null,title:null},CH=150,n=Math.ceil(buf.duration/CH);
+ for(let i=0;i<n;i++){sp(30+i/n*60,`AI: pinakikinggan ang bahagi ${i+1}/${n}…`);const s=i*CH,r=await gem(await b64wav(buf,s,Math.min(CH,buf.duration-s)));
+  (r.captions||[]).forEach(c=>o.captions.push({s:+c.s+s,e:+c.e+s,t:String(c.t)}));(r.moments||[]).forEach(m=>o.moments.push({t:+m.t+s,zoom:!!m.zoom,sfx:m.sfx}));o.mood=o.mood||r.mood;o.title=o.title||r.title;if(i<n-1)await wait(1500)}return o}
+function merge(a){P.captions=a.captions.filter(c=>c.t&&c.e>c.s).sort((x,y)=>x.s-y.s);P.captions.forEach((c,i,r)=>{if(r[i+1]&&c.e>r[i+1].s)c.e=r[i+1].s});if(a.title)P.title=a.title;if(MD[a.mood])P.mood=a.mood;
+ if(a.moments.length){P.zooms=[];P.sfx=P.cuts.map(c=>({t:Math.max(0,c.t-.05),k:'whoosh'}));a.moments.forEach(m=>{if(m.zoom)P.zooms.push({t:Math.max(0,m.t-.1),d:1.4,a:.15});if(OK.includes(m.sfx))P.sfx.push({t:Math.max(0,m.sfx=='riser'?m.t-1.5:m.t),k:m.sfx})})}}
+function list(){const l=g('cl');l.innerHTML='';P.captions.forEach((c,i)=>{const d=document.createElement('div');d.className='cr';d.innerHTML='<small>'+c.s.toFixed(1)+'s</small><input type="text"><button>✕</button>';const n=d.querySelector('input');n.value=c.t;n.oninput=()=>c.t=n.value;d.querySelector('button').onclick=()=>{P.captions.splice(i,1);list()};l.append(d)});
+ g('sum').textContent=`${P.captions.length} caption · ${P.sfx.length} sound effect · ${P.cuts.length} transition · ${P.zooms.length} zoom`;
+ g('nocap').textContent=P.captions.length?'I-tap ang text para ituwid ang caption.':'Walang auto-caption. Maglagay ng libreng Gemini key at ulitin ang AI Auto Edit.'}
+
+g('go').onclick=async()=>{if(busy)return;busy=1;g('go').disabled=1;
+ try{A=A||new(window.AudioContext||window.webkitAudioContext)();await A.resume();let buf=null,en=[];sp(3,'Binabasa ang audio…');
+  try{buf=await A.decodeAudioData(await F.arrayBuffer());en=energy(buf)}catch(e){lg('Hindi mabasa ang audio, visual edit lang.');await wait(1500)}
+  V.pause();P=local(await cuts(),en);
+  if(g('key').value.trim()&&buf){try{merge(await ask(buf))}catch(e){lg('AI error: '+e.message+' — local auto-edit ang gagamitin.');await wait(2500)}}
+  P.sfx.sort((a,b)=>a.t-b.t);P.sfx=P.sfx.filter((s,i,r)=>!i||s.t-r[i-1].t>.4);g('it').value=P.title;list();g('ed').hidden=0;sp(100,'Tapos na ang edit plan! I-preview o i-export.');g('ed').scrollIntoView({behavior:'smooth'})}
+ catch(e){lg('Error: '+e.message)}busy=0;g('go').disabled=0};
+
+function nz(d,f1,f2,v,pk){const t=A.currentTime,b=A.createBuffer(1,A.sampleRate*d,A.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;const s=A.createBufferSource(),f=A.createBiquadFilter(),q=A.createGain();s.buffer=b;f.type='bandpass';f.Q.value=1.1;f.frequency.setValueAtTime(f1,t);f.frequency.exponentialRampToValueAtTime(f2,t+d);q.gain.setValueAtTime(.001,t);q.gain.exponentialRampToValueAtTime(v,t+d*pk);q.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(q);q.connect(SG);s.start(t)}
+function sfx(k){const t=A.currentTime,o=(f,f2,d,ty,v)=>{const s=A.createOscillator(),q=A.createGain();s.type=ty;s.frequency.setValueAtTime(f,t);s.frequency.exponentialRampToValueAtTime(f2,t+d);q.gain.setValueAtTime(v,t);q.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(q);q.connect(SG);s.start(t);s.stop(t+d+.05)};
+ if(k=='whoosh')nz(.8,2500,250,1,.25);else if(k=='riser')nz(1.5,300,4000,1,.95);else if(k=='hit'){o(150,32,.7,'sine',1.3);nz(.3,800,200,.6,.05)}else if(k=='ding'){o(1320,1320,1,'sine',.5);o(1980,1980,.8,'sine',.3)}else if(k=='sting'){o(700,500,1.2,'sawtooth',.18);o(740,520,1.2,'sawtooth',.18)}}
+function music(T,len,mo){const m=MD[mo]||MD.dramatic,o=(f,t,d,ty,v)=>{const s=A.createOscillator(),q=A.createGain();s.type=ty;s.frequency.value=f;q.gain.setValueAtTime(0,t);q.gain.linearRampToValueAtTime(v,t+Math.min(.6,d/3));q.gain.linearRampToValueAtTime(0,t+d);s.connect(q);q.connect(MG);s.start(t);s.stop(t+d+.1)};
+ for(let t=0,i=0;t<len;t+=m.l,i++){const ch=m.c[i%4];ch.forEach(n=>o(hz(m.r+12+n),T+t,m.l+.8,'triangle',.22));o(hz(m.r+ch[0]),T+t,m.l+.8,'sine',.5);
+  if(m.a)for(let k=0;k<m.l/m.a;k++)o(hz(m.r+24+ch[k%3]),T+t+k*m.a,m.a*2,'sine',.12);if(m.h)for(let k=0;k<m.l;k+=1.2){o(55,T+t+k,.25,'sine',.9);o(55,T+t+k+.28,.2,'sine',.6)}}}
+
+function cap(t){const c=P.captions.find(c=>t>=c.s&&t<=c.e);if(!c||!g('cp').checked)return;const st=g('cs').value,W=C.width,H=C.height,u=Math.min(1,(t-c.s)/.12),fs=Math.round(W*.062*(.9+.1*u)),tx=st=='cine'?c.t:c.t.toUpperCase();
+ X.font=`${st=='cine'?'italic 600':'900'} ${fs}px Impact,"Arial Black",system-ui,sans-serif`;X.textAlign='center';X.textBaseline='middle';
+ const ls=[''];tx.split(' ').forEach(w=>{const l=ls[ls.length-1];if(l&&X.measureText(l+' '+w).width>W*.86)ls.push(w);else ls[ls.length-1]=l?l+' '+w:w});
+ const lh=fs*1.2,y0=H*.76-(ls.length-1)*lh/2,x=W/2;
+ ls.forEach((l,i)=>{const y=y0+i*lh;if(st=='tele'){const w=X.measureText(l).width+fs*.8;X.fillStyle='rgba(200,20,60,.88)';X.beginPath();X.roundRect?X.roundRect(x-w/2,y-lh/2,w,lh,fs*.25):X.rect(x-w/2,y-lh/2,w,lh);X.fill();X.fillStyle='#fff';X.fillText(l,x,y)}
+  else{X.lineJoin='round';X.lineWidth=fs*.2;X.strokeStyle='#000';if(st!='cine')X.strokeText(l,x,y);else{X.shadowColor='#000';X.shadowBlur=fs*.3}X.fillStyle=st=='gold'?'#ffd400':'#fff';X.fillText(l,x,y);X.shadowBlur=0}})}
+function frame(t){const W=C.width,H=C.height;let z=1,sx=0,sy=0;
+ if(g('zm').checked)for(const q of P.zooms)if(t>=q.t&&t<q.t+q.d)z+=q.a*Math.sin(Math.PI*(t-q.t)/q.d);
+ const tc=g('tr').checked?P.cuts.find(c=>t>c.t-.22&&t<c.t+.22):null,pk=tc?Math.sin(Math.PI*(t-tc.t+.22)/.44):0;if(tc&&tc.tr=='zoom')z+=.15*pk;
+ if(g('sf').checked&&P.sfx.some(s=>s.k=='hit'&&t>s.t&&t<s.t+.3)){sx=(Math.random()-.5)*W*.015;sy=(Math.random()-.5)*W*.015;z+=.02}
+ X.save();X.translate(W/2+sx,H/2+sy);X.scale(z,z);X.drawImage(V,-W/2,-H/2,W,H);X.restore();
+ const gr=g('gr').value;if(gr!='none'){const o=X.createLinearGradient(0,0,0,H);if(gr=='cine'){o.addColorStop(0,'#0aa5b5');o.addColorStop(1,'#ff8a3c')}else if(gr=='warm'){o.addColorStop(0,'#ffb347');o.addColorStop(1,'#ff7a45')}else{o.addColorStop(0,'#5b2a86');o.addColorStop(1,'#1b1030')}
+  X.globalCompositeOperation='soft-light';X.globalAlpha=.5;X.fillStyle=o;X.fillRect(0,0,W,H);X.globalCompositeOperation='source-over';X.globalAlpha=1;
+  const v=X.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.55)');X.fillStyle=v;X.fillRect(0,0,W,H)}
+ if(tc&&tc.tr=='flash'){X.fillStyle=`rgba(255,255,255,${.85*pk})`;X.fillRect(0,0,W,H)}if(tc&&tc.tr=='dip'){X.fillStyle=`rgba(0,0,0,${pk})`;X.fillRect(0,0,W,H)}
+ cap(t);const fs=Math.round(W*.06);X.textAlign='center';X.textBaseline='middle';
+ if(g('in').checked&&t<3.2){const a=Math.max(0,Math.min(1,t/.5,(3.2-t)/.5));X.globalAlpha=a;X.fillStyle='rgba(212,22,60,.92)';X.fillRect(0,H*.1,W,fs*1.9);X.fillStyle='#fff';X.font=`900 ${fs}px Georgia,serif`;X.fillText((g('it').value||P.title).toUpperCase().slice(0,34),W/2,H*.1+fs*.95);X.globalAlpha=1}
+ if(g('out').checked&&t>dur-3.2){const a=Math.min(1,(t-(dur-3.2))/.6);X.fillStyle=`rgba(0,0,0,${.55*a})`;X.fillRect(0,0,W,H);X.globalAlpha=a;X.fillStyle='#fff';X.font=`900 ${Math.round(fs*1.1)}px Georgia,serif`;X.fillText(g('ot').value,W/2,H/2,W*.9);X.globalAlpha=1}
+ const fo=t<.4?1-t/.4:t>dur-1?t-(dur-1):0;if(fo>0){X.fillStyle=`rgba(0,0,0,${Math.min(1,fo)})`;X.fillRect(0,0,W,H)}}
+
+async function run(rec){if(busy||!P)return;busy=1;stopF=0;g('go').disabled=1;let mr,ch=[],mt;
+ try{A=A||new(window.AudioContext||window.webkitAudioContext)();await A.resume();if(!src)src=A.createMediaElementSource(V);src.disconnect();
+  const RD=A.createMediaStreamDestination(),bus=A.createGain();bus.connect(RD);if(!rec)bus.connect(A.destination);src.connect(bus);
+  MG=A.createGain();SG=A.createGain();MG.gain.value=.14*g('mv').value;SG.gain.value=.7;MG.connect(bus);SG.connect(bus);
+  document.body.classList.add('run');g('res').hidden=1;await seek(0);
+  const ev=g('sf').checked?P.sfx.map(x=>({...x,d:0})):[];
+  if(rec){mt=['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));const s=C.captureStream(30);RD.stream.getAudioTracks().forEach(t=>s.addTrack(t));mr=new MediaRecorder(s,mt?{mimeType:mt,videoBitsPerSecond:5e6}:{});mr.ondataavailable=e=>e.data.size&&ch.push(e.data);mr.start(1000)}
+  if(g('mu').checked)music(A.currentTime+.05,dur,gm());
+  try{navigator.wakeLock?.request('screen').catch(()=>{})}catch(e){}
+  await V.play();
+  await new Promise(done=>{const loop=()=>{const t=V.currentTime;frame(t);ev.forEach(x=>{if(!x.d&&t>=x.t){x.d=1;if(t-x.t<.5)sfx(x.k)}});bus.gain.value=Math.max(0,Math.min(1,t/.4,(dur-t)/1.2));
+   sp(t/dur*100,(rec?'Ine-export… ':'Pina-preview… ')+Math.round(t)+'/'+Math.round(dur)+' seg');if(stopF||V.ended||t>=dur-.05||(V.paused&&t>0)){done();return}requestAnimationFrame(loop)};loop()});
+  V.pause();MG.disconnect();SG.disconnect();
+  if(rec){await new Promise(r=>{mr.onstop=r;mr.stop()});if(!stopF){const b=new Blob(ch,{type:mt||'video/webm'}),n='kuwentocut-'+Date.now()+'.'+((mt||'').includes('mp4')?'mp4':'webm'),u=URL.createObjectURL(b);out=new File([b],n,{type:b.type});g('dl').href=u;g('dl').download=n;g('rv').src=u;g('res').hidden=0;g('sh').hidden=!(navigator.canShare&&navigator.canShare({files:[out]}));g('res').scrollIntoView({behavior:'smooth'})}}
+  sp(100,stopF?'Itinigil.':rec?'Tapos na ang export!':'Tapos na ang preview.');
+ }catch(e){lg('Error: '+e.message);try{mr&&mr.state!='inactive'&&mr.stop()}catch(x){}}
+ document.body.classList.remove('run');try{src.disconnect();src.connect(A.destination)}catch(e){}V.currentTime=0;busy=0;g('go').disabled=0}
+g('pv').onclick=()=>run(0);g('ex').onclick=()=>run(1);g('stop').onclick=()=>{stopF=1};
+g('sh').onclick=()=>navigator.share({files:[out],title:'KuwentoCut'}).catch(()=>{});
+</script></body></html>
